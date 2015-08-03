@@ -1,9 +1,16 @@
 import com.vaadin.client.ui.Field;
 import com.vaadin.client.ui.VDateField;
 import com.vaadin.client.ui.VTextField;
+import com.vaadin.data.Container;
 import com.vaadin.data.Item;
+import com.vaadin.data.Property;
+import com.vaadin.data.util.HierarchicalContainer;
 import com.vaadin.ui.*;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.*;
 
 import static com.vaadin.ui.Alignment.*;
@@ -14,6 +21,91 @@ import static com.vaadin.ui.Alignment.*;
 public  abstract class TableEditorWindow  extends  ActionWindow{
     protected Set<Object> dates2 = new HashSet<Object>();
     protected Map<Object, Component> map = new HashMap<Object, Component>();
+    private final Button save;
+
+
+    protected void  replaceToCombo(String key, String query){
+        Container container = new HierarchicalContainer();
+        container.addContainerProperty("id", String.class, "");
+        String defaultValue = null;
+        try{
+            Connection connection = DriverManager.getConnection("jdbc:sqlite:ivan.db3");
+            try{
+               ResultSet rs = connection.createStatement().executeQuery(query);
+                while (rs.next()){
+                    defaultValue = rs.getString(1);
+                    container.addItem(defaultValue).getItemProperty("id").setValue(defaultValue);
+                }
+            }finally{
+                connection.close();
+            }
+        }catch (Exception ex){
+
+        }
+
+        replaceToCombo(key, container, defaultValue);
+
+    }
+
+    protected void replaceToCombo(String key, Container container, String defaultValue){
+        final TextField  field = (TextField)map.get(key);
+        HorizontalLayout layout = (HorizontalLayout) field.getParent();
+        field.setVisible(false);
+        final ComboBox comboBox = new ComboBox("",container);
+        comboBox.setImmediate(true);
+        comboBox.setNullSelectionAllowed(false);
+
+        comboBox.addValueChangeListener(new Property.ValueChangeListener() {
+            @Override
+            public void valueChange(Property.ValueChangeEvent valueChangeEvent) {
+                field.setValue((String) comboBox.getValue());
+            }
+        });
+
+        if(container.containsId(field.getValue())) {
+            comboBox.select(field.getValue());
+        }else{
+            field.setValue(defaultValue);
+            comboBox.select(defaultValue);
+        }
+        layout.addComponent(comboBox, 1);
+    }
+
+
+    private Set<AbstractField> errors = new HashSet<AbstractField>();
+
+    private void setNotNull(final AbstractField field){
+        field.setImmediate(true);
+        if(nullorempty(field.getValue())){
+            errors.add(field);
+            save.setEnabled(false);
+        }
+
+        field.addValueChangeListener(new Property.ValueChangeListener() {
+            @Override
+            public void valueChange(Property.ValueChangeEvent valueChangeEvent) {
+                if(nullorempty(field.getValue())) errors.add(field);
+                else errors.remove(field);
+                save.setEnabled(errors.isEmpty());
+
+            }
+        });
+
+    }
+
+    private boolean nullorempty(Object value){
+        if(value == null) return true;
+        if(value instanceof  String){
+            String s = ((String)value).trim();
+            if(s.length() ==0) return true;
+        }
+        return false;
+    }
+
+    protected void setNotNull(String key){
+        if(map.containsKey(key)) setNotNull((AbstractField)map.get(key));
+    }
+
 
     protected java.sql.Date getDate(String s){
        try {
@@ -61,12 +153,12 @@ public  abstract class TableEditorWindow  extends  ActionWindow{
            }
        }
 
-       Button save = new Button("Записать");
+        save = new Button("Записать");
        content.addComponent(save);
        save.addClickListener(new Button.ClickListener() {
            @Override
            public void buttonClick(Button.ClickEvent clickEvent) {
-              if(actionPerformed()) close();
+               if (actionPerformed()) close();
            }
        });
 
@@ -74,4 +166,6 @@ public  abstract class TableEditorWindow  extends  ActionWindow{
     }
 
     protected abstract boolean actionPerformed();
+
+
 }

@@ -104,7 +104,12 @@ public class OperInput  extends VerticalLayout {
             @Override
             public void buttonClick(Button.ClickEvent clickEvent) {
                 TableEditorWindow win = new TableEditorWindow(table, table.getValue(),"birthday", "startday", "endday"){
-
+                    {
+                        setNotNull("name");
+                        setNotNull("surname");
+                        setNotNull("grandname");
+                        setNotNull("startday");
+                    }
                     @Override
                     protected boolean actionPerformed() {
                         try {
@@ -139,6 +144,12 @@ public class OperInput  extends VerticalLayout {
             @Override
             public void buttonClick(Button.ClickEvent clickEvent) {
                 TableEditorWindow win = new TableEditorWindow(table, null,"birthday", "startday", "endday"){
+                    {
+                        setNotNull("name");
+                        setNotNull("surname");
+                        setNotNull("grandname");
+                        setNotNull("startday");
+                    }
                     protected boolean actionPerformed(){
                        try{
                            Connection connection = DriverManager.getConnection("jdbc:sqlite:ivan.db3");

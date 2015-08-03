@@ -20,13 +20,21 @@ public class PishWeb extends UI {
             var3.printStackTrace();
         }
 
-        TabSheet sheet = new TabSheet();
-        UI.getCurrent().setContent(sheet);
-        sheet.addTab(new OperInput(), "Операторы");
-        sheet.addTab(new VerticalLayout(), "Станки");
+        String ip = Page.getCurrent().getWebBrowser().getAddress();
+        if("127.0.0.1".equals(ip)) {
+            TabSheet sheet = new DecoratedTabSheet();
+            UI.getCurrent().setContent(sheet);
 
-        String address = Page.getCurrent().getWebBrowser().getAddress();
-        System.out.println(address);
+            sheet.addTab(new OperInput(), "Операторы");
+            sheet.addTab(new VerticalLayout(), "Станки");
+            sheet.addTab(new UsersManager(), "Пользователи");
+
+
+
+        }else{
+            UI.getCurrent().setContent(new AuthorizationForm());
+        }
+
        // Page.getCurrent().getJavaScript().execute("setInterval(function(){setTimeout(function(){autoupdater();},10);},3000);");
     }
 }
